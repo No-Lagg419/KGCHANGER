@@ -1,7 +1,10 @@
--- 🧬 Pet Ager & Fake KG Tool (Proportioned Body/Wings Scaling)
+-- 🧬 Pet Ager & Fake KG Tool (Proportioned Body/Wings Scaling + GUI Fix)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
+
+-- Wait until PlayerGui exists para siguradong lalabas GUI
+repeat task.wait() until player:FindFirstChild("PlayerGui")
 
 -- === CONFIG ===
 local AGE_SPEED = 0.1 -- Seconds per step
@@ -9,12 +12,13 @@ local AGE_STEPS = 50
 
 -- Scaling targets
 local BODY_SCALE = Vector3.new(2, 3.5, 2) -- Katawan: mas mataas Y
-local WING_SCALE = Vector3.new(1.5, 2, 1.5) -- Wings: mas mataas Y kaysa dati
+local WING_SCALE = Vector3.new(2.5, 2.3, 2.5) -- Wings: mas malapad X/Z, mas mataas Y
 
 -- === GUI SETUP ===
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local gui = Instance.new("ScreenGui")
 gui.Name = "PetModifierGUI"
 gui.ResetOnSpawn = false
+gui.Parent = player:FindFirstChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 270, 0, 200)
@@ -148,7 +152,7 @@ local function visualGrow(tool, mode)
 			end
 		end
 		scalePetBodyWings(tool, i / AGE_STEPS)
-		wait(AGE_SPEED)
+		task.wait(AGE_SPEED)
 	end
 end
 
