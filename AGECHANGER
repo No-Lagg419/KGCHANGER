@@ -1,12 +1,15 @@
--- 🧬 Pet Ager & Fake KG Tool (Fixed Target Size Scaling - Right Side GUI)
+-- 🧬 Pet Ager & Fake KG Tool (Body/Wings Custom Scaling)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 
 -- === CONFIG ===
 local AGE_SPEED = 0.1 -- Seconds per step
-local AGE_TARGET_SCALE = 2.0 -- Final size multiplier for Age mode
-local KG_TARGET_SCALE = 3.0 -- Final size multiplier for KG mode
+local AGE_STEPS = 50
+
+-- Scaling targets
+local BODY_SCALE = Vector3.new(2, 3, 2) -- X, Y, Z for body
+local WING_SCALE = Vector3.new(1.5, 1.5, 1.5) -- X, Y, Z for wings
 
 -- === GUI SETUP ===
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -21,17 +24,14 @@ frame.Active = true
 frame.Draggable = true
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
--- Title
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 26)
-title.Position = UDim2.new(0, 0, 0, 0)
 title.Text = "🐾 Pet Visual Modifier"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamSemibold
 title.TextSize = 18
 
--- Button Creator
 local function createBtn(text, yPos, color)
 	local btn = Instance.new("TextButton", frame)
 	btn.Size = UDim2.new(0.85, 0, 0, 36)
@@ -41,17 +41,14 @@ local function createBtn(text, yPos, color)
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 15
 	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.AutoButtonColor = true
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 	return btn
 end
 
--- Buttons
-local ageBtn = createBtn("🕒 Age to 50 (Balanced Size)", 0.2, Color3.fromRGB(255, 140, 140))
-local kgBtn  = createBtn("⚖️ KG to 50 (Balanced Size)", 0.35, Color3.fromRGB(140, 255, 140))
+local ageBtn = createBtn("🕒 Age to 50 (Balanced Body/Wings)", 0.2, Color3.fromRGB(255, 140, 140))
+local kgBtn  = createBtn("⚖️ KG to 50 (Balanced Body/Wings)", 0.35, Color3.fromRGB(140, 255, 140))
 local resetBtn = createBtn("🔁 Reset Held Pet", 0.5, Color3.fromRGB(100, 180, 255))
 
--- Progress Bar
 local progressBar = Instance.new("Frame", frame)
 progressBar.Size = UDim2.new(0.85, 0, 0, 20)
 progressBar.Position = UDim2.new(0.075, 0, 0.76, 0)
@@ -61,21 +58,19 @@ Instance.new("UICorner", progressBar).CornerRadius = UDim.new(0, 6)
 local fill = Instance.new("Frame", progressBar)
 fill.BackgroundColor3 = Color3.fromRGB(0, 255, 140)
 fill.Size = UDim2.new(0, 0, 1, 0)
-fill.BorderSizePixel = 0
 Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 
--- Credit Text
 local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 18)
 credit.Position = UDim2.new(0, 0, 1, -18)
-credit.Text = "Made by KielCrafts + Fixed Size Mod"
+credit.Text = "Made by KielCrafts + Body/Wings Mod"
 credit.TextColor3 = Color3.fromRGB(160, 160, 160)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 12
 credit.BackgroundTransparency = 1
 
--- === UTILS ===
-local originalData = {} -- store original name & size
+-- === DATA ===
+local originalData = {}
 
 local function storeOriginal(tool)
 	if not originalData[tool] then
@@ -103,88 +98,84 @@ local function resetPet(tool)
 	end
 end
 
-local function scalePetToTarget(tool, targetFactor, progress)
-	if not originalData[tool] then return end
+local function scalePetBodyWings(tool, progress)
 	for obj, originalSize in pairs(originalData[tool].sizes) do
+		local factor
+		local nameLower = obj.Name:lower()
+		if nameLower:find("wing") then
+			factor = WING_SCALE
+		else
+			factor = BODY_SCALE
+		end
+
+		local targetSize = Vector3.new(
+			originalSize.X * factor.X,
+			originalSize.Y * factor.Y,
+			originalSize.Z * factor.Z
+		)
+
+		local newSize = originalSize:Lerp(targetSize, progress)
+
 		if obj:IsA("BasePart") then
-			obj.Size = originalSize * (1 + (targetFactor - 1) * progress)
+			obj.Size = newSize
 		elseif obj:IsA("SpecialMesh") then
-			obj.Scale = originalSize * (1 + (targetFactor - 1) * progress)
+			obj.Scale = newSize
 		end
 	end
 end
 
--- === FUNCTIONS ===
-local function visualAge(tool)
+local function visualGrow(tool, mode)
 	storeOriginal(tool)
 	local baseName = originalData[tool].name
 	fill.Size = UDim2.new(0, 0, 1, 0)
-	fill.BackgroundColor3 = Color3.fromRGB(255, 140, 140)
-	TweenService:Create(fill, TweenInfo.new(AGE_SPEED * 50, Enum.EasingStyle.Linear), {
+	fill.BackgroundColor3 = (mode == "age") and Color3.fromRGB(255, 140, 140) or Color3.fromRGB(140, 255, 140)
+	TweenService:Create(fill, TweenInfo.new(AGE_SPEED * AGE_STEPS, Enum.EasingStyle.Linear), {
 		Size = UDim2.new(1, 0, 1, 0)
 	}):Play()
 
-	for i = 1, 50 do
+	for i = 1, AGE_STEPS do
 		if baseName:find("%[.-KG%]") then
-			tool.Name = baseName:gsub("%[.-KG%]", "[Age " .. i .. "]")
+			if mode == "age" then
+				tool.Name = baseName:gsub("%[.-KG%]", "[Age " .. i .. "]")
+			else
+				tool.Name = baseName:gsub("%[.-KG%]", "[" .. i .. " KG]")
+			end
 		else
-			tool.Name = baseName .. " [Age " .. i .. "]"
+			if mode == "age" then
+				tool.Name = baseName .. " [Age " .. i .. "]"
+			else
+				tool.Name = baseName .. " [" .. i .. " KG]"
+			end
 		end
-		scalePetToTarget(tool, AGE_TARGET_SCALE, i / 50)
-		wait(AGE_SPEED)
-	end
-end
-
-local function visualKG(tool)
-	storeOriginal(tool)
-	local baseName = originalData[tool].name
-	fill.Size = UDim2.new(0, 0, 1, 0)
-	fill.BackgroundColor3 = Color3.fromRGB(140, 255, 140)
-	TweenService:Create(fill, TweenInfo.new(AGE_SPEED * 50, Enum.EasingStyle.Linear), {
-		Size = UDim2.new(1, 0, 1, 0)
-	}):Play()
-
-	for i = 1, 50 do
-		if baseName:find("%[.-KG%]") then
-			tool.Name = baseName:gsub("%[.-KG%]", "[" .. i .. " KG]")
-		else
-			tool.Name = baseName .. " [" .. i .. " KG]"
-		end
-		scalePetToTarget(tool, KG_TARGET_SCALE, i / 50)
+		scalePetBodyWings(tool, i / AGE_STEPS)
 		wait(AGE_SPEED)
 	end
 end
 
 -- === EVENTS ===
 ageBtn.MouseButton1Click:Connect(function()
-	local char = player.Character
-	if not char then return end
-	local tool = char:FindFirstChildOfClass("Tool")
-	if not tool then
-		warn("You're not holding a pet/tool.")
-		return
+	local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+	if tool then
+		visualGrow(tool, "age")
+	else
+		warn("No pet equipped.")
 	end
-	visualAge(tool)
 end)
 
 kgBtn.MouseButton1Click:Connect(function()
-	local char = player.Character
-	if not char then return end
-	local tool = char:FindFirstChildOfClass("Tool")
-	if not tool then
-		warn("You're not holding a pet/tool.")
-		return
+	local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+	if tool then
+		visualGrow(tool, "kg")
+	else
+		warn("No pet equipped.")
 	end
-	visualKG(tool)
 end)
 
 resetBtn.MouseButton1Click:Connect(function()
-	local char = player.Character
-	if not char then return end
-	local tool = char:FindFirstChildOfClass("Tool")
-	if not tool then
+	local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+	if tool then
+		resetPet(tool)
+	else
 		warn("No pet equipped.")
-		return
 	end
-	resetPet(tool)
 end)
