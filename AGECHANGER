@@ -1,28 +1,28 @@
--- 🧬 Pet Ager & Fake KG Tool (Huge Lean Body + Stretched Wings + GUI Fix)
+-- 🧬 Pet Ager & Fake KG Tool (Proportional Huge Scaling + GUI)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 
--- Wait until PlayerGui exists para siguradong lalabas GUI
 repeat task.wait() until player:FindFirstChild("PlayerGui")
 
 -- === CONFIG ===
-local AGE_SPEED = 0.1 -- Seconds per step
+local AGE_SPEED = 0.05
 local AGE_STEPS = 50
 
--- Huge Lean Body + Stretched Wings
-local BODY_SCALE = Vector3.new(2.0, 10.0, 2.0) -- slim lapad, sobrang taas
-local WING_SCALE = Vector3.new(8.0, 3.0, 8.0) -- sobrang haba at lapad, hindi makapal
+-- Multipliers (proportional)
+local BODY_MULTIPLIER = 3.0    -- laki ng katawan
+local WING_MULTIPLIER = 4.0    -- laki ng wings
+local TAIL_MULTIPLIER = 3.5    -- laki ng buntot
 
--- === GUI SETUP ===
+-- === GUI ===
 local gui = Instance.new("ScreenGui")
 gui.Name = "PetModifierGUI"
 gui.ResetOnSpawn = false
-gui.Parent = player:FindFirstChild("PlayerGui")
+gui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 270, 0, 200)
-frame.Position = UDim2.new(1, -280, 0.4, 0) -- kanan
+frame.Position = UDim2.new(1, -280, 0.4, 0)
 frame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 frame.Active = true
 frame.Draggable = true
@@ -67,7 +67,7 @@ Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 18)
 credit.Position = UDim2.new(0, 0, 1, -18)
-credit.Text = "Made by KielCrafts + Huge Wing Stretch"
+credit.Text = "Made by KielCrafts + Proportional Scaling"
 credit.TextColor3 = Color3.fromRGB(160, 160, 160)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 12
@@ -102,22 +102,20 @@ local function resetPet(tool)
 	end
 end
 
-local function scalePetBodyWings(tool, progress)
+local function scalePetProportional(tool, progress)
 	for obj, originalSize in pairs(originalData[tool].sizes) do
-		local factor
 		local nameLower = obj.Name:lower()
+		local factor = 1
+
 		if nameLower:find("wing") then
-			factor = WING_SCALE
+			factor = WING_MULTIPLIER
+		elseif nameLower:find("tail") then
+			factor = TAIL_MULTIPLIER
 		else
-			factor = BODY_SCALE
+			factor = BODY_MULTIPLIER
 		end
 
-		local targetSize = Vector3.new(
-			originalSize.X * factor.X,
-			originalSize.Y * factor.Y,
-			originalSize.Z * factor.Z
-		)
-
+		local targetSize = originalSize * factor
 		local newSize = originalSize:Lerp(targetSize, progress)
 
 		if obj:IsA("BasePart") then
@@ -151,7 +149,7 @@ local function visualGrow(tool, mode)
 				tool.Name = baseName .. " [" .. i .. " KG]"
 			end
 		end
-		scalePetBodyWings(tool, i / AGE_STEPS)
+		scalePetProportional(tool, i / AGE_STEPS)
 		task.wait(AGE_SPEED)
 	end
 end
