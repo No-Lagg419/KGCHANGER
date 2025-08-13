@@ -1,10 +1,12 @@
--- 🧬 Pet Ager & KG Tool with Progress Bar GUI
+-- 🧬 Pet Ager & KG Tool with Progress Bar + Visual Scaling
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 
 -- === CONFIG ===
-local AGE_SPEED = 0.1 -- Seconds per level
+local AGE_SPEED = 0.1 -- Seconds per step
+local AGE_SCALE_FACTOR = 1.005 -- Growth per step for Age
+local KG_SCALE_FACTOR = 1.01 -- Growth per step for KG
 
 -- === GUI SETUP ===
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -66,13 +68,15 @@ Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 18)
 credit.Position = UDim2.new(0, 0, 1, -18)
-credit.Text = "Made by KielCrafts"
+credit.Text = "Made by KielCrafts + Scale Mod"
 credit.TextColor3 = Color3.fromRGB(160, 160, 160)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 12
 credit.BackgroundTransparency = 1
 
 -- === UTILS ===
+local originalSizes = {} -- store original sizes for reset
+
 local function cleanName(name)
 	name = name:gsub("%[Age%s*%d+%]", "")
 	name = name:gsub(" | Age:%s*%d+", "")
@@ -82,8 +86,44 @@ local function cleanName(name)
 	return name
 end
 
+local function storeOriginalSizes(tool)
+	if not originalSizes[tool] then
+		originalSizes[tool] = {}
+		for _, obj in pairs(tool:GetDescendants()) do
+			if obj:IsA("BasePart") then
+				originalSizes[tool][obj] = obj.Size
+			elseif obj:IsA("SpecialMesh") then
+				originalSizes[tool][obj] = obj.Scale
+			end
+		end
+	end
+end
+
+local function resetPetSize(tool)
+	if originalSizes[tool] then
+		for obj, size in pairs(originalSizes[tool]) do
+			if obj:IsA("BasePart") then
+				obj.Size = size
+			elseif obj:IsA("SpecialMesh") then
+				obj.Scale = size
+			end
+		end
+	end
+end
+
+local function scalePet(tool, scaleFactor)
+	for _, obj in pairs(tool:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			obj.Size = obj.Size * scaleFactor
+		elseif obj:IsA("SpecialMesh") then
+			obj.Scale = obj.Scale * scaleFactor
+		end
+	end
+end
+
 -- === FUNCTIONS ===
 local function ageTool(tool)
+	storeOriginalSizes(tool)
 	local base = cleanName(tool.Name)
 	fill.Size = UDim2.new(0, 0, 1, 0)
 	fill.BackgroundColor3 = Color3.fromRGB(255, 140, 140) -- Red for Age
@@ -93,11 +133,13 @@ local function ageTool(tool)
 
 	for i = 1, 50 do
 		tool.Name = base .. " | Age: " .. i
+		scalePet(tool, AGE_SCALE_FACTOR)
 		wait(AGE_SPEED)
 	end
 end
 
 local function kgTool(tool)
+	storeOriginalSizes(tool)
 	local base = cleanName(tool.Name)
 	fill.Size = UDim2.new(0, 0, 1, 0)
 	fill.BackgroundColor3 = Color3.fromRGB(140, 255, 140) -- Green for KG
@@ -107,6 +149,7 @@ local function kgTool(tool)
 
 	for i = 1, 50 do
 		tool.Name = base .. " | KG: " .. i
+		scalePet(tool, KG_SCALE_FACTOR)
 		wait(AGE_SPEED)
 	end
 end
@@ -143,4 +186,5 @@ resetBtn.MouseButton1Click:Connect(function()
 		return
 	end
 	tool.Name = cleanName(tool.Name)
+	resetPetSize(tool)
 end)
