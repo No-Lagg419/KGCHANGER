@@ -1,12 +1,12 @@
--- 🧬 Pet Ager & Fake KG Tool (Huge Scaling)
+-- 🧬 Pet Ager & Fake KG Tool (Replace Bracketed KG Only)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 
 -- === CONFIG ===
 local AGE_SPEED = 0.1 -- Seconds per step
-local AGE_SCALE_FACTOR = 1.05 -- 5% growth per step for Age
-local KG_SCALE_FACTOR = 1.1  -- 10% growth per step for KG
+local AGE_SCALE_XZ = 1.05 -- 5% growth on X & Z per step for Age
+local KG_SCALE_XZ = 1.1  -- 10% growth on X & Z per step for KG
 
 -- === GUI SETUP ===
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -15,7 +15,7 @@ gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 270, 0, 200)
-frame.Position = UDim2.new(0.5, -135, 0.55, -100)
+frame.Position = UDim2.new(1, -280, 0.4, 0) -- right side
 frame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 frame.Active = true
 frame.Draggable = true
@@ -47,8 +47,8 @@ local function createBtn(text, yPos, color)
 end
 
 -- Buttons
-local ageBtn = createBtn("🕒 Age to 50 (Visual Huge)", 0.2, Color3.fromRGB(255, 140, 140))
-local kgBtn  = createBtn("⚖️ KG to 50 (Visual Huge)", 0.35, Color3.fromRGB(140, 255, 140))
+local ageBtn = createBtn("🕒 Age to 50 (Visual Long)", 0.2, Color3.fromRGB(255, 140, 140))
+local kgBtn  = createBtn("⚖️ KG to 50 (Visual Long)", 0.35, Color3.fromRGB(140, 255, 140))
 local resetBtn = createBtn("🔁 Reset Held Pet", 0.5, Color3.fromRGB(100, 180, 255))
 
 -- Progress Bar
@@ -68,7 +68,7 @@ Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 18)
 credit.Position = UDim2.new(0, 0, 1, -18)
-credit.Text = "Made by KielCrafts + Huge Visual Mod"
+credit.Text = "Made by KielCrafts + Long Visual Mod"
 credit.TextColor3 = Color3.fromRGB(160, 160, 160)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 12
@@ -103,12 +103,12 @@ local function resetPet(tool)
 	end
 end
 
-local function scalePet(tool, scaleFactor)
+local function scalePetXZ(tool, scaleFactor)
 	for _, obj in pairs(tool:GetDescendants()) do
 		if obj:IsA("BasePart") then
-			obj.Size = obj.Size * scaleFactor
+			obj.Size = Vector3.new(obj.Size.X * scaleFactor, obj.Size.Y, obj.Size.Z * scaleFactor)
 		elseif obj:IsA("SpecialMesh") then
-			obj.Scale = obj.Scale * scaleFactor
+			obj.Scale = Vector3.new(obj.Scale.X * scaleFactor, obj.Scale.Y, obj.Scale.Z * scaleFactor)
 		end
 	end
 end
@@ -116,7 +116,7 @@ end
 -- === FUNCTIONS ===
 local function visualAge(tool)
 	storeOriginal(tool)
-	local baseName = originalData[tool].name:gsub(" | Age:%s*%d+", ""):gsub(" | KG:%s*%d+", "")
+	local baseName = originalData[tool].name
 	fill.Size = UDim2.new(0, 0, 1, 0)
 	fill.BackgroundColor3 = Color3.fromRGB(255, 140, 140)
 	TweenService:Create(fill, TweenInfo.new(AGE_SPEED * 50, Enum.EasingStyle.Linear), {
@@ -124,15 +124,19 @@ local function visualAge(tool)
 	}):Play()
 
 	for i = 1, 50 do
-		tool.Name = baseName .. " | Age: " .. i
-		scalePet(tool, AGE_SCALE_FACTOR)
+		if baseName:find("%[.-KG%]") then
+			tool.Name = baseName:gsub("%[.-KG%]", "[Age " .. i .. "]")
+		else
+			tool.Name = baseName .. " [Age " .. i .. "]"
+		end
+		scalePetXZ(tool, AGE_SCALE_XZ)
 		wait(AGE_SPEED)
 	end
 end
 
 local function visualKG(tool)
 	storeOriginal(tool)
-	local baseName = originalData[tool].name:gsub(" | KG:%s*%d+", ""):gsub("%[.-KG%]", "")
+	local baseName = originalData[tool].name
 	fill.Size = UDim2.new(0, 0, 1, 0)
 	fill.BackgroundColor3 = Color3.fromRGB(140, 255, 140)
 	TweenService:Create(fill, TweenInfo.new(AGE_SPEED * 50, Enum.EasingStyle.Linear), {
@@ -140,8 +144,12 @@ local function visualKG(tool)
 	}):Play()
 
 	for i = 1, 50 do
-		tool.Name = baseName .. " | KG: " .. i
-		scalePet(tool, KG_SCALE_FACTOR)
+		if baseName:find("%[.-KG%]") then
+			tool.Name = baseName:gsub("%[.-KG%]", "[" .. i .. " KG]")
+		else
+			tool.Name = baseName .. " [" .. i .. " KG]"
+		end
+		scalePetXZ(tool, KG_SCALE_XZ)
 		wait(AGE_SPEED)
 	end
 end
