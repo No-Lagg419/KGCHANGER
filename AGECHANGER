@@ -1,12 +1,12 @@
--- 🧬 Pet Ager & Fake KG Tool (Uniform Huge Scaling - Right Side GUI)
+-- 🧬 Pet Ager & Fake KG Tool (Fixed Target Size Scaling - Right Side GUI)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 
 -- === CONFIG ===
 local AGE_SPEED = 0.1 -- Seconds per step
-local AGE_SCALE_FACTOR = 1.05 -- 5% growth per step for Age
-local KG_SCALE_FACTOR = 1.1  -- 10% growth per step for KG
+local AGE_TARGET_SCALE = 2.0 -- Final size multiplier for Age mode
+local KG_TARGET_SCALE = 3.0 -- Final size multiplier for KG mode
 
 -- === GUI SETUP ===
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -47,8 +47,8 @@ local function createBtn(text, yPos, color)
 end
 
 -- Buttons
-local ageBtn = createBtn("🕒 Age to 50 (Visual Huge)", 0.2, Color3.fromRGB(255, 140, 140))
-local kgBtn  = createBtn("⚖️ KG to 50 (Visual Huge)", 0.35, Color3.fromRGB(140, 255, 140))
+local ageBtn = createBtn("🕒 Age to 50 (Balanced Size)", 0.2, Color3.fromRGB(255, 140, 140))
+local kgBtn  = createBtn("⚖️ KG to 50 (Balanced Size)", 0.35, Color3.fromRGB(140, 255, 140))
 local resetBtn = createBtn("🔁 Reset Held Pet", 0.5, Color3.fromRGB(100, 180, 255))
 
 -- Progress Bar
@@ -68,7 +68,7 @@ Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 18)
 credit.Position = UDim2.new(0, 0, 1, -18)
-credit.Text = "Made by KielCrafts + Uniform Visual Mod"
+credit.Text = "Made by KielCrafts + Fixed Size Mod"
 credit.TextColor3 = Color3.fromRGB(160, 160, 160)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 12
@@ -103,12 +103,13 @@ local function resetPet(tool)
 	end
 end
 
-local function scalePetUniform(tool, factor)
-	for _, obj in pairs(tool:GetDescendants()) do
+local function scalePetToTarget(tool, targetFactor, progress)
+	if not originalData[tool] then return end
+	for obj, originalSize in pairs(originalData[tool].sizes) do
 		if obj:IsA("BasePart") then
-			obj.Size = obj.Size * factor
+			obj.Size = originalSize * (1 + (targetFactor - 1) * progress)
 		elseif obj:IsA("SpecialMesh") then
-			obj.Scale = obj.Scale * factor
+			obj.Scale = originalSize * (1 + (targetFactor - 1) * progress)
 		end
 	end
 end
@@ -129,7 +130,7 @@ local function visualAge(tool)
 		else
 			tool.Name = baseName .. " [Age " .. i .. "]"
 		end
-		scalePetUniform(tool, AGE_SCALE_FACTOR)
+		scalePetToTarget(tool, AGE_TARGET_SCALE, i / 50)
 		wait(AGE_SPEED)
 	end
 end
@@ -149,7 +150,7 @@ local function visualKG(tool)
 		else
 			tool.Name = baseName .. " [" .. i .. " KG]"
 		end
-		scalePetUniform(tool, KG_SCALE_FACTOR)
+		scalePetToTarget(tool, KG_TARGET_SCALE, i / 50)
 		wait(AGE_SPEED)
 	end
 end
