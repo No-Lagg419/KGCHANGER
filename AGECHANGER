@@ -1,4 +1,4 @@
--- 🧬 Pet Ager & Fake KG Tool (Proportional Huge Scaling + GUI)
+-- 🧬 Pet Ager & Fake KG Tool (Final Proportional Lean Scaling)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
@@ -9,10 +9,10 @@ repeat task.wait() until player:FindFirstChild("PlayerGui")
 local AGE_SPEED = 0.05
 local AGE_STEPS = 50
 
--- Multipliers (proportional)
-local BODY_MULTIPLIER = 3.0    -- laki ng katawan
-local WING_MULTIPLIER = 4.0    -- laki ng wings
-local TAIL_MULTIPLIER = 3.5    -- laki ng buntot
+-- Multipliers (lean proportions)
+local BODY_MULT = Vector3.new(1.5, 3.5, 1.5)  -- mas mataas kaysa malapad
+local WING_MULT = Vector3.new(3.0, 1.5, 3.0)  -- malapad at mahaba pero di makapal
+local TAIL_MULT = Vector3.new(2.0, 2.0, 2.0)  -- proportionate tail size
 
 -- === GUI ===
 local gui = Instance.new("ScreenGui")
@@ -49,8 +49,8 @@ local function createBtn(text, yPos, color)
 	return btn
 end
 
-local ageBtn = createBtn("🕒 Age to 50 (Huge)", 0.2, Color3.fromRGB(255, 140, 140))
-local kgBtn  = createBtn("⚖️ KG to 50 (Huge)", 0.35, Color3.fromRGB(140, 255, 140))
+local ageBtn = createBtn("🕒 Age to 50 (Huge Lean)", 0.2, Color3.fromRGB(255, 140, 140))
+local kgBtn  = createBtn("⚖️ KG to 50 (Huge Lean)", 0.35, Color3.fromRGB(140, 255, 140))
 local resetBtn = createBtn("🔁 Reset Held Pet", 0.5, Color3.fromRGB(100, 180, 255))
 
 local progressBar = Instance.new("Frame", frame)
@@ -67,7 +67,7 @@ Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 18)
 credit.Position = UDim2.new(0, 0, 1, -18)
-credit.Text = "Made by KielCrafts + Proportional Scaling"
+credit.Text = "Made by KielCrafts + Lean Scaling"
 credit.TextColor3 = Color3.fromRGB(160, 160, 160)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 12
@@ -102,20 +102,25 @@ local function resetPet(tool)
 	end
 end
 
-local function scalePetProportional(tool, progress)
+local function getMultiplier(partName)
+	local nameLower = partName:lower()
+	if nameLower:find("wing") then
+		return WING_MULT
+	elseif nameLower:find("tail") then
+		return TAIL_MULT
+	else
+		return BODY_MULT
+	end
+end
+
+local function scalePetLean(tool, progress)
 	for obj, originalSize in pairs(originalData[tool].sizes) do
-		local nameLower = obj.Name:lower()
-		local factor = 1
-
-		if nameLower:find("wing") then
-			factor = WING_MULTIPLIER
-		elseif nameLower:find("tail") then
-			factor = TAIL_MULTIPLIER
-		else
-			factor = BODY_MULTIPLIER
-		end
-
-		local targetSize = originalSize * factor
+		local factor = getMultiplier(obj.Name)
+		local targetSize = Vector3.new(
+			originalSize.X * factor.X,
+			originalSize.Y * factor.Y,
+			originalSize.Z * factor.Z
+		)
 		local newSize = originalSize:Lerp(targetSize, progress)
 
 		if obj:IsA("BasePart") then
@@ -123,6 +128,16 @@ local function scalePetProportional(tool, progress)
 		elseif obj:IsA("SpecialMesh") then
 			obj.Scale = newSize
 		end
+	end
+end
+
+local function updateName(baseName, mode, step)
+	local newLabel = (mode == "age") and ("[Age " .. step .. "]") or ("[" .. step .. " KG]")
+	-- Palitan lang kung may existing bracket
+	if baseName:find("%[.-%]") then
+		return baseName:gsub("%[.-%]", newLabel)
+	else
+		return baseName .. " " .. newLabel
 	end
 end
 
@@ -136,20 +151,8 @@ local function visualGrow(tool, mode)
 	}):Play()
 
 	for i = 1, AGE_STEPS do
-		if baseName:find("%[.-KG%]") then
-			if mode == "age" then
-				tool.Name = baseName:gsub("%[.-KG%]", "[Age " .. i .. "]")
-			else
-				tool.Name = baseName:gsub("%[.-KG%]", "[" .. i .. " KG]")
-			end
-		else
-			if mode == "age" then
-				tool.Name = baseName .. " [Age " .. i .. "]"
-			else
-				tool.Name = baseName .. " [" .. i .. " KG]"
-			end
-		end
-		scalePetProportional(tool, i / AGE_STEPS)
+		tool.Name = updateName(baseName, mode, i)
+		scalePetLean(tool, i / AGE_STEPS)
 		task.wait(AGE_SPEED)
 	end
 end
