@@ -1,4 +1,4 @@
--- 🧬 Pet Ager & Fake KG Tool (Body/Wings Custom Scaling)
+-- 🧬 Pet Ager & Fake KG Tool (Proportioned Body/Wings Scaling)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
@@ -8,8 +8,8 @@ local AGE_SPEED = 0.1 -- Seconds per step
 local AGE_STEPS = 50
 
 -- Scaling targets
-local BODY_SCALE = Vector3.new(2, 3, 2) -- X, Y, Z for body
-local WING_SCALE = Vector3.new(1.5, 1.5, 1.5) -- X, Y, Z for wings
+local BODY_SCALE = Vector3.new(2, 3.5, 2) -- Katawan: mas mataas Y
+local WING_SCALE = Vector3.new(1.5, 2, 1.5) -- Wings: mas mataas Y kaysa dati
 
 -- === GUI SETUP ===
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -45,8 +45,8 @@ local function createBtn(text, yPos, color)
 	return btn
 end
 
-local ageBtn = createBtn("🕒 Age to 50 (Balanced Body/Wings)", 0.2, Color3.fromRGB(255, 140, 140))
-local kgBtn  = createBtn("⚖️ KG to 50 (Balanced Body/Wings)", 0.35, Color3.fromRGB(140, 255, 140))
+local ageBtn = createBtn("🕒 Age to 50 (Proportioned)", 0.2, Color3.fromRGB(255, 140, 140))
+local kgBtn  = createBtn("⚖️ KG to 50 (Proportioned)", 0.35, Color3.fromRGB(140, 255, 140))
 local resetBtn = createBtn("🔁 Reset Held Pet", 0.5, Color3.fromRGB(100, 180, 255))
 
 local progressBar = Instance.new("Frame", frame)
@@ -63,7 +63,7 @@ Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 18)
 credit.Position = UDim2.new(0, 0, 1, -18)
-credit.Text = "Made by KielCrafts + Body/Wings Mod"
+credit.Text = "Made by KielCrafts + Proportioned Scaling"
 credit.TextColor3 = Color3.fromRGB(160, 160, 160)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 12
